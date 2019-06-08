@@ -1,0 +1,200 @@
+# depslib dependency file v1.0
+1452511122 source:d:\ufsm\disciplinas\logica e algoritmo\programas\canvas2d\src\gl_canvas2d.cpp
+	"gl_canvas2d.h"
+	<GL/glut.h>
+
+1452511058 d:\ufsm\disciplinas\logica e algoritmo\programas\canvas2d\src\gl_canvas2d.h
+	<stdio.h>
+	<stdlib.h>
+	<math.h>
+	<string.h>
+	<GL/glut.h>
+	<GL/freeglut_ext.h>
+
+1426358040 d:\ufsm\disciplinas\logica e algoritmo\programas\canvas2d\include\gl\glut.h
+	"freeglut_std.h"
+
+1437565542 d:\ufsm\disciplinas\logica e algoritmo\programas\canvas2d\include\gl\freeglut_std.h
+	<windows.h>
+	<EGL/egl.h>
+	<GLES/gl.h>
+	<GLES2/gl2.h>
+	<OpenGL/gl.h>
+	<OpenGL/glu.h>
+	<GL/gl.h>
+	<GL/glu.h>
+	<stdlib.h>
+
+1426358040 d:\ufsm\disciplinas\logica e algoritmo\programas\canvas2d\include\gl\freeglut_ext.h
+	<stdarg.h>
+
+1452512244 source:d:\ufsm\disciplinas\logica e algoritmo\programas\canvas2d\src\main_c.cpp
+	<GL/glut.h>
+	<GL/freeglut_ext.h>
+	<math.h>
+	<stdio.h>
+	<stdlib.h>
+	<time.h>
+	"gl_canvas2d.h"
+
+1452511122 source:c:\tmp\la_11_canvas2d_win\src\gl_canvas2d.cpp
+	"gl_canvas2d.h"
+	<GL/glut.h>
+
+1452511058 c:\tmp\la_11_canvas2d_win\src\gl_canvas2d.h
+	<stdio.h>
+	<stdlib.h>
+	<math.h>
+	<string.h>
+	<GL/glut.h>
+	<GL/freeglut_ext.h>
+
+1426358040 c:\tmp\la_11_canvas2d_win\include\gl\glut.h
+	"freeglut_std.h"
+
+1437565542 c:\tmp\la_11_canvas2d_win\include\gl\freeglut_std.h
+	<windows.h>
+	<EGL/egl.h>
+	<GLES/gl.h>
+	<GLES2/gl2.h>
+	<OpenGL/gl.h>
+	<OpenGL/glu.h>
+	<GL/gl.h>
+	<GL/glu.h>
+	<stdlib.h>
+
+1426358040 c:\tmp\la_11_canvas2d_win\include\gl\freeglut_ext.h
+	<stdarg.h>
+
+1452512244 source:c:\tmp\la_11_canvas2d_win\src\main_c.cpp
+	<GL/glut.h>
+	<GL/freeglut_ext.h>
+	<math.h>
+	<stdio.h>
+	<stdlib.h>
+	<time.h>
+	"gl_canvas2d.h"
+
+1467405623 source:d:\ufsm\disciplinas\logica e algoritmo\programas\la_11_canvas2d_win\src\gl_canvas2d.cpp
+	"gl_canvas2d.h"
+	"GL/glut.h"
+
+1467405417 d:\ufsm\disciplinas\logica e algoritmo\programas\la_11_canvas2d_win\src\gl_canvas2d.h
+	<stdio.h>
+	<stdlib.h>
+	<math.h>
+	<string.h>
+	"GL/glut.h"
+	"GL/freeglut_ext.h"
+
+1426358040 d:\ufsm\disciplinas\logica e algoritmo\programas\la_11_canvas2d_win\include\gl\freeglut_ext.h
+	<stdarg.h>
+
+1426358040 d:\ufsm\disciplinas\logica e algoritmo\programas\la_11_canvas2d_win\include\gl\glut.h
+	"freeglut_std.h"
+
+1437565542 d:\ufsm\disciplinas\logica e algoritmo\programas\la_11_canvas2d_win\include\gl\freeglut_std.h
+	<windows.h>
+	<EGL/egl.h>
+	<GLES/gl.h>
+	<GLES2/gl2.h>
+	<OpenGL/gl.h>
+	<OpenGL/glu.h>
+	<GL/gl.h>
+	<GL/glu.h>
+	<stdlib.h>
+
+1494872053 source:d:\ufsm\disciplinas\logica e algoritmo\programas\la_11_canvas2d_win\src\main_c.cpp
+	"GL/glut.h"
+	"GL/freeglut_ext.h"
+	<math.h>
+	<stdio.h>
+	<stdlib.h>
+	<time.h>
+	"gl_canvas2d.h"
+
+1559165581 source:c:\users\danie\documents\pozzer\src\gl_canvas2d.cpp
+	"gl_canvas2d.h"
+	"GL/glut.h"
+
+1467405417 c:\users\danie\documents\pozzer\src\gl_canvas2d.h
+	<stdio.h>
+	<stdlib.h>
+	<math.h>
+	<string.h>
+	"GL/glut.h"
+	"GL/freeglut_ext.h"
+
+1426358040 c:\users\danie\documents\pozzer\include\gl\glut.h
+	"freeglut_std.h"
+
+1437565542 c:\users\danie\documents\pozzer\include\gl\freeglut_std.h
+	<windows.h>
+	<EGL/egl.h>
+	<GLES/gl.h>
+	<GLES2/gl2.h>
+	<OpenGL/gl.h>
+	<OpenGL/glu.h>
+	<GL/gl.h>
+	<GL/glu.h>
+	<stdlib.h>
+
+1426358040 c:\users\danie\documents\pozzer\include\gl\freeglut_ext.h
+	<stdarg.h>
+
+1559167849 source:c:\users\danie\documents\pozzer\src\main_c.cpp
+	"GL/glut.h"
+	"GL/freeglut_ext.h"
+	<math.h>
+	<iostream>
+	<stdio.h>
+	<stdlib.h>
+	<time.h>
+	"gl_canvas2d.h"
+
+1559802211 source:c:\users\danie\documents\candycrush\src\gl_canvas2d.cpp
+	"gl_canvas2d.h"
+	"GL/glut.h"
+
+1559802325 c:\users\danie\documents\candycrush\src\gl_canvas2d.h
+	<stdio.h>
+	<stdlib.h>
+	<math.h>
+	<string.h>
+	"GL/glut.h"
+	"GL/freeglut_ext.h"
+
+1426358040 c:\users\danie\documents\candycrush\include\gl\glut.h
+	"freeglut_std.h"
+
+1437565542 c:\users\danie\documents\candycrush\include\gl\freeglut_std.h
+	<windows.h>
+	<EGL/egl.h>
+	<GLES/gl.h>
+	<GLES2/gl2.h>
+	<OpenGL/gl.h>
+	<OpenGL/glu.h>
+	<GL/gl.h>
+	<GL/glu.h>
+	<stdlib.h>
+
+1426358040 c:\users\danie\documents\candycrush\include\gl\freeglut_ext.h
+	<stdarg.h>
+
+1559793536 source:c:\users\danie\documents\candycrush\src\candy.cpp
+	"Candy.h"
+	<iostream>
+
+1559793434 c:\users\danie\documents\candycrush\include\candy.h
+
+1559802207 source:c:\users\danie\documents\candycrush\src\main_c.cpp
+	"GL/glut.h"
+	"GL/freeglut_ext.h"
+	<math.h>
+	<iostream>
+	<stdio.h>
+	<stdlib.h>
+	<time.h>
+	<stdbool.h>
+	"gl_canvas2d.h"
+
