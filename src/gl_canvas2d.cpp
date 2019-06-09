@@ -24,6 +24,11 @@
 
 #include "GL/glut.h"
 //#include <GL/freeglut_ext.h> //callback da wheel do mouse.
+#ifdef _WIN32
+#include <Windows.h>
+#else
+#include <unistd.h>
+#endif
 
 int largura, altura;
 
@@ -206,7 +211,6 @@ void display (void)
    gluOrtho2D (0.0, largura, 0.0, altura);
    glMatrixMode(GL_MODELVIEW);
    glLoadIdentity();
-
    render();
 
    glFlush();

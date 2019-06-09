@@ -152,9 +152,11 @@
 	<time.h>
 	"gl_canvas2d.h"
 
-1559802211 source:c:\users\danie\documents\candycrush\src\gl_canvas2d.cpp
+1560103549 source:c:\users\danie\documents\candycrush\src\gl_canvas2d.cpp
 	"gl_canvas2d.h"
 	"GL/glut.h"
+	<Windows.h>
+	<unistd.h>
 
 1559802325 c:\users\danie\documents\candycrush\src\gl_canvas2d.h
 	<stdio.h>
@@ -187,7 +189,7 @@
 
 1559793434 c:\users\danie\documents\candycrush\include\candy.h
 
-1560053117 source:c:\users\danie\documents\candycrush\src\main_c.cpp
+1560111145 source:c:\users\danie\documents\candycrush\src\main_c.cpp
 	"GL/glut.h"
 	"GL/freeglut_ext.h"
 	<math.h>
@@ -196,5 +198,7 @@
 	<stdlib.h>
 	<time.h>
 	<stdbool.h>
+	<Windows.h>
+	<unistd.h>
 	"gl_canvas2d.h"
 
