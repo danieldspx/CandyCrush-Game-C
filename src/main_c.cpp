@@ -93,6 +93,7 @@ void setCandyProperties(Candy *candy){
   candy->red = RGB(red);
   candy->green = RGB(green);
   candy->blue = RGB(blue);
+  candy->willExplode = false;
 }
 
 Candy* getRandomCandy(){
@@ -121,19 +122,33 @@ void drawBackGrid(int x, int y){
   rect(x1, y1, x2, y2);
 }
 
+void markBackGridAsRed(Position pos){
+  int x1 = GRID_X * pos.x;
+  int y1 = GRID_Y * pos.y;
+
+  int x2 =  x1 + GRID_X;
+  int y2 =  y1 + GRID_Y;
+
+  color(RGB(159), 0, 0);
+  rectFill(x1, y1, x2, y2);
+}
+
 void initMatrixCandyCrush(){
   Candy *candy;
-  for(int i = 0; i < GRID_SIZE; i++){//Line
-    for(int j = 0; j < GRID_SIZE; j++){//Column
+  for(int y = 0; y < GRID_SIZE; y++){//Line
+    for(int x = 0; x < GRID_SIZE; x++){//Column
       candy = getRandomCandy();
-      candy->position.x = i;
-      candy->position.y = j;
-      *((matrixCandy+i*GRID_SIZE) + j) = candy;
+      candy->position.x = x;
+      candy->position.y = y;
+      *((matrixCandy+y*GRID_SIZE) + x) = candy;
     }
   }
 }
 
 void drawCandy(Candy *candy){
+  if(candy->willExplode == true){
+    markBackGridAsRed(candy->position);
+  }
   const int sizeCandy = CANDY_SIZE;
   const int sides = candy->shapeSides;
   int centerX = getCenterGridX(candy->position.x);
@@ -144,46 +159,78 @@ void drawCandy(Candy *candy){
 
 void drawCandiesOnScreen(){
   Candy *candy;
-  for(int x = 0; x < GRID_SIZE; x++){
-    for(int y = 0; y < GRID_SIZE; y++){
-      candy = *(matrixCandy+x*GRID_SIZE + y);
+  for(int y = 0; y < GRID_SIZE; y++){
+    for(int x = 0; x < GRID_SIZE; x++){
+      candy = *((matrixCandy+x*GRID_SIZE) + y);
       drawBackGrid(x, y);
-      if(*candy != NULL){
+      if(candy != NULL){
         drawCandy(candy);
       }
     }
   }
 }
 
-void checkCrushX(Candy **matrixCandyX, int line){//Check if there is candies to explode in a given line
-  Candy **currentLine = matrixCandyX+line*GRID_SIZE;
+Candy* getCandy(int line, int column, Candy **matrixCandyRef){
+  return *(matrixCandyRef+line*GRID_SIZE + column);
+}
+
+void checkCrushX(Candy **matrixCandyRef, int line){//Check if there is candies to explode in a given line
   Candy *currentCandy;
   int keyType, contador = 0;
-  for(int x = 0; x < GRID_SIZE; x++){
-    currentCandy = currentLine[x];
-    if(x == 0){
+  for(int column = 0; column < GRID_SIZE; column++){
+    currentCandy = getCandy(line, column, matrixCandyRef);
+    if(column == 0){
       keyType = currentCandy->type;
+      contador++;
     } else {
       if(keyType == currentCandy->type){
         contador++;
         if(contador >= 3){
           if(contador == 3){//Mark the 2 candies before the 3th
-            (currentLine[x-1])->willExplode = true;
-            (currentLine[x-2])->willExplode = true;
+            (getCandy(line, column-1, matrixCandyRef))->willExplode = true;
+            (getCandy(line, column-2, matrixCandyRef))->willExplode = true;
           }
           currentCandy->willExplode = true;
-          printf("(%d, %d)\n", x, line);
         }
       } else {
-        contador = 0;
+        contador = 1;
         keyType = currentCandy->type;
       }
     }
   }
 }
 
-void checkCrush(){//Check if there is candies to explode
+void checkCrushY(Candy **matrixCandyRef, int column){//Check if there is candies to explode in a given line
+  Candy *currentCandy;
+  int keyType, contador = 0;
+  for(int line = 0; line < GRID_SIZE; line++){
+    currentCandy = getCandy(line, column, matrixCandyRef);
+    if(line == 0){
+      keyType = currentCandy->type;
+      contador++;
+    } else {
+      if(keyType == currentCandy->type){
+        contador++;
+        if(contador >= 3){
+          if(contador == 3){//Mark the 2 candies before the 3th
+            (getCandy(line-1, column, matrixCandyRef))->willExplode = true;
+            (getCandy(line-2, column, matrixCandyRef))->willExplode = true;
+          }
+          currentCandy->willExplode = true;
+        }
+      } else {
+        contador = 1;
+        keyType = currentCandy->type;
+      }
+    }
+  }
+}
 
+void checkCrush(Candy **matrixCandyRef){//Check if there is candies to explode
+  for(int i = 0; i < GRID_SIZE; i++){
+    checkCrushX(matrixCandyRef, i);
+    checkCrushY(matrixCandyRef, i);
+  }
 }
 
 
@@ -223,7 +270,7 @@ void mouse(int button, int state, int wheel, int direction, int x, int y){
 int main(void){
     srand(time(0));
     initMatrixCandyCrush();
-    // checkCrushX(matrixCandy, 0);
+    checkCrush(matrixCandy);
     initCanvas(DIM_TELA_X + WIDTH_POINTS, DIM_TELA_Y, "Candy Crush");
     runCanvas();
 }
