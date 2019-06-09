@@ -22,12 +22,6 @@
 #include <time.h>
 #include <stdbool.h>
 
-#ifdef _WIN32
-#include <Windows.h>
-#else
-#include <unistd.h>
-#endif
-
 #include "gl_canvas2d.h"
 
 #define RGB(x) (float)x/255
@@ -36,15 +30,18 @@
 #define CANDY_SIZE 30
 #define ANIMATION_STAGE_MAX 100
 
-
+const int WIDTH_POINTS = 200;
+//Properties
 int DIM_TELA_X = 600;
 int DIM_TELA_Y = 600;
 int GRID_X = (int)ceil(DIM_TELA_X/GRID_SIZE);
 int GRID_Y = (int)ceil(DIM_TELA_Y/GRID_SIZE);
+//Flags
 bool hasMatrixCandyChanged = true;//Start as a New state
 bool hasAnimations = true;//Start as a New state
+bool hasSelectedCandy = false;
 int totalAnimation = 0;
-const int WIDTH_POINTS = 200;
+int totalSelectedCandy = 0;
 
 typedef struct {
   int x;
@@ -73,7 +70,9 @@ typedef struct {
   Candy **ref;
 } CandyRef;
 
+//Variables
 Candy **matrixCandy = (Candy **)malloc(CANDY_SIZE*CANDY_SIZE*sizeof(Candy *));
+Position selectedCandies[2];
 
 int getRandomType();
 void updateWindowProps();
@@ -98,6 +97,9 @@ void initCandiesAnimation(Candy **matrixCandyRef);
 void animateCandy(Candy *candy, Position center);
 void setWillExplode(CandyRef candyRef);
 void initFirstLineTop(Candy **matrixCandyRef);
+bool isClickInsideArea(Position pointBottomLeft, Position pointTopRight, Position click);
+Position mapCandyClicked(Position click);
+void drawSelectionCandy();
 
 
 //////////////////////////////////////////////////////
@@ -109,6 +111,7 @@ void render(){
     initFirstLineTop(matrixCandy);
     initCandiesAnimation(matrixCandy);
     checkCrush(matrixCandy);
+    drawSelectionCandy();
     drawCandiesOnScreen();
     // rect(100, 100, 100+100, 100+100);
     //
@@ -132,7 +135,22 @@ void keyboardUp(int key){
 void mouse(int button, int state, int wheel, int direction, int x, int y){
    y = DIM_TELA_Y - y;
 
-   printf("\nmouse %d %d %d %d %d %d", button, state, wheel, direction,  x, y);
+   //printf("\nmouse %d %d %d %d %d %d", button, state, wheel, direction,  x, y);
+
+   if(button == 0 && state == 0){
+     Position pointBottomLeft = {0, 0};
+     Position pointTopRight = {GRID_X*GRID_SIZE, GRID_Y*GRID_SIZE};
+     Position click = {x, y};
+     if(isClickInsideArea(pointBottomLeft, pointTopRight, click)){
+       if(totalSelectedCandy == 2){
+         totalSelectedCandy = 0;
+       }
+       selectedCandies[totalSelectedCandy] = mapCandyClicked(click);
+       totalSelectedCandy++;
+     } else {
+       totalSelectedCandy = 0;
+     }
+   }
 
 }
 
@@ -141,6 +159,33 @@ int main(void){
     initMatrixCandyCrush(matrixCandy);
     initCanvas(DIM_TELA_X + WIDTH_POINTS, DIM_TELA_Y, "Candy Crush");
     runCanvas();
+}
+
+void drawSelectionCandy(){
+  for(int i = 0; i < totalSelectedCandy; i++){
+    markBackGridAsRed(selectedCandies[i]);
+  }
+}
+
+bool isClickInsideArea(Position pointBottomLeft, Position pointTopRight, Position click){
+  int areaWidth = pointTopRight.x - pointBottomLeft.x;
+  int areaHeight = pointTopRight.y - pointBottomLeft.y;
+  int clickWidth = click.x - pointBottomLeft.x;
+  int clickHeight = click.y - pointBottomLeft.y;
+  bool isInsideArea = false;
+  if(clickHeight > 0 && clickWidth > 0){
+    if(clickWidth <= areaWidth && clickHeight <= areaHeight){
+      isInsideArea = true;
+    }
+  }
+  return isInsideArea;
+}
+
+Position mapCandyClicked(Position click){
+  Position selected;
+  selected.x = click.x / GRID_X;
+  selected.y = click.y / GRID_Y;
+  return selected;
 }
 
 int getRandomType(){
@@ -331,6 +376,7 @@ void explodeCandies(Candy **matrixCandyRef){
         continue;
       }
       if(currentCandy != NULL && currentCandy->willExplode){
+        free(currentCandy);
         removeCandyOfMatrix(candyRef);
       }
     }

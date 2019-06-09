@@ -24,11 +24,6 @@
 
 #include "GL/glut.h"
 //#include <GL/freeglut_ext.h> //callback da wheel do mouse.
-#ifdef _WIN32
-#include <Windows.h>
-#else
-#include <unistd.h>
-#endif
 
 int largura, altura;
 

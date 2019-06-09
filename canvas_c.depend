@@ -152,11 +152,9 @@
 	<time.h>
 	"gl_canvas2d.h"
 
-1560103549 source:c:\users\danie\documents\candycrush\src\gl_canvas2d.cpp
+1560116955 source:c:\users\danie\documents\candycrush\src\gl_canvas2d.cpp
 	"gl_canvas2d.h"
 	"GL/glut.h"
-	<Windows.h>
-	<unistd.h>
 
 1559802325 c:\users\danie\documents\candycrush\src\gl_canvas2d.h
 	<stdio.h>
