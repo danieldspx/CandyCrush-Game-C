@@ -34,7 +34,7 @@
 #define PI 3.14159265
 #define GRID_SIZE 9
 #define CANDY_SIZE 30
-#define ANIMATION_STAGE_MAX 500
+#define ANIMATION_STAGE_MAX 100
 
 
 int DIM_TELA_X = 600;
@@ -42,6 +42,7 @@ int DIM_TELA_Y = 600;
 int GRID_X = (int)ceil(DIM_TELA_X/GRID_SIZE);
 int GRID_Y = (int)ceil(DIM_TELA_Y/GRID_SIZE);
 bool hasMatrixCandyChanged = true;//Start as a New state
+bool hasAnimations = true;//Start as a New state
 int totalAnimation = 0;
 const int WIDTH_POINTS = 200;
 
@@ -82,7 +83,7 @@ int getCenterGridX(int x);
 int getCenterGridY(int y);
 void drawBackGrid(int x, int y);
 void markBackGridAsRed(Position pos);
-void initMatrixCandyCrush();
+void initMatrixCandyCrush(Candy **matrixCandyRef);
 void drawCandy(Candy *candy);
 void drawCandiesOnScreen();
 void hightLightExplodableCandies(Candy **matrixCandyRef);
@@ -95,7 +96,8 @@ void checkCrush(Candy **matrixCandyRef);
 void swapCandiesOnMatrix(Position from, Position to, Candy **matrix);
 void initCandiesAnimation(Candy **matrixCandyRef);
 void animateCandy(Candy *candy, Position center);
-void setWillExplode(Candy *candy);
+void setWillExplode(CandyRef candyRef);
+void initFirstLineTop(Candy **matrixCandyRef);
 
 
 //////////////////////////////////////////////////////
@@ -104,10 +106,9 @@ void render(){
 
     clear(0,0,0);
     updateWindowProps();
-    if(totalAnimation == 0){
-      checkCrush(matrixCandy);
-    }
+    initFirstLineTop(matrixCandy);
     initCandiesAnimation(matrixCandy);
+    checkCrush(matrixCandy);
     drawCandiesOnScreen();
     // rect(100, 100, 100+100, 100+100);
     //
@@ -137,7 +138,7 @@ void mouse(int button, int state, int wheel, int direction, int x, int y){
 
 int main(void){
     srand(time(0));
-    initMatrixCandyCrush();
+    initMatrixCandyCrush(matrixCandy);
     initCanvas(DIM_TELA_X + WIDTH_POINTS, DIM_TELA_Y, "Candy Crush");
     runCanvas();
 }
@@ -226,14 +227,37 @@ void markBackGridAsRed(Position pos){
   rectFill(x1, y1, x2, y2);
 }
 
-void initMatrixCandyCrush(){
+void initMatrixCandyCrush(Candy **matrixCandyRef){
   Candy *candy;
   for(int y = 0; y < GRID_SIZE; y++){//Line
     for(int x = 0; x < GRID_SIZE; x++){//Column
       candy = getRandomCandy();
       candy->position.x = x;
       candy->position.y = y;
-      *((matrixCandy+y*GRID_SIZE) + x) = candy;
+      *((matrixCandyRef+y*GRID_SIZE) + x) = candy;
+    }
+  }
+}
+
+void initFirstLineTop(Candy **matrixCandyRef){
+  Candy *candy;
+  CandyRef candyRef;
+  candyRef.ref = matrixCandyRef;
+  candyRef.line = GRID_SIZE-1;
+  for(int column = 0; column < GRID_SIZE; column++){//Column
+    candyRef.column = column;
+    candy = getCandy(candyRef);
+    if(candy == NULL){
+      candy = getRandomCandy();
+      totalAnimation++;
+      candy->animation.isAnimating = true;
+      candy->animation.from.x = column;
+      candy->animation.from.y = GRID_SIZE;
+      candy->animation.to.x = column;
+      candy->animation.to.y = GRID_SIZE-1;
+      candy->position.x = column;
+      candy->position.y = candyRef.line;
+      *((matrixCandyRef+candyRef.line*GRID_SIZE) + column) = candy;
     }
   }
 }
@@ -334,9 +358,9 @@ void checkCrushX(Candy **matrixCandyRef, int line){//Check if there is candies t
         if(contador >= 3){
           if(contador == 3){//Mark the 2 candies before the 3th
             candyRef.column--;//Back one column
-            setWillExplode(getCandy(candyRef));
+            setWillExplode(candyRef);
             candyRef.column--;//Back one column again
-            setWillExplode(getCandy(candyRef));
+            setWillExplode(candyRef);
           }
           currentCandy->willExplode = true;
         }
@@ -348,7 +372,8 @@ void checkCrushX(Candy **matrixCandyRef, int line){//Check if there is candies t
   }
 }
 
-void setWillExplode(Candy *candy){
+void setWillExplode(CandyRef candyRef){
+  Candy *candy = getCandy(candyRef);
   if(candy != NULL){
     candy->willExplode = true;
   }
@@ -375,9 +400,9 @@ void checkCrushY(Candy **matrixCandyRef, int column){//Check if there is candies
         if(contador >= 3){
           if(contador == 3){//Mark the 2 candies before the 3th
             candyRef.line--;//Back one column
-            setWillExplode(getCandy(candyRef));
+            setWillExplode(candyRef);
             candyRef.line--;//Back one column again
-            setWillExplode(getCandy(candyRef));
+            setWillExplode(candyRef);
           }
           currentCandy->willExplode = true;
         }
@@ -391,10 +416,10 @@ void checkCrushY(Candy **matrixCandyRef, int column){//Check if there is candies
 
 void checkCrush(Candy **matrixCandyRef){//Check if there is candies to explode
   if(totalAnimation == 0){
-    if(hasMatrixCandyChanged){
+    if(hasMatrixCandyChanged && !hasAnimations){
       hasMatrixCandyChanged = false;
       for(int i = 0; i < GRID_SIZE; i++){
-        checkCrushX(matrixCandyRef, i);;
+        checkCrushX(matrixCandyRef, i);
         checkCrushY(matrixCandyRef, i);
       }
       hightLightExplodableCandies(matrixCandyRef);
@@ -419,6 +444,7 @@ void initCandiesAnimation(Candy **matrixCandyRef){
   Candy *upCandy, *belowCandy;
   CandyRef candyRefUp, candyRefBelow;
   Position futurePosition;
+  hasAnimations = false;
   candyRefUp.ref = matrixCandyRef;
   candyRefBelow.ref = matrixCandyRef;
   for(int column = 0; column < GRID_SIZE; column++){
@@ -432,7 +458,6 @@ void initCandiesAnimation(Candy **matrixCandyRef){
 
       if(belowCandy == NULL && upCandy != NULL){
         if(upCandy->animation.isAnimating == false){
-          totalAnimation++;//Add one animation to the counter
           upCandy->animation.isAnimating = true;
           upCandy->animation.stage = 0;
           upCandy->animation.from.y = line+1;//Line up
@@ -440,6 +465,8 @@ void initCandiesAnimation(Candy **matrixCandyRef){
           upCandy->animation.to.y = line;//Line below
           upCandy->animation.to.x = column;//Line below
           swapCandiesOnMatrix(upCandy->animation.from, upCandy->animation.to, matrixCandyRef);
+          totalAnimation++;//Add one animation to the counter
+          hasAnimations = true;
         }
       }
     }
