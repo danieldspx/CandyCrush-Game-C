@@ -100,6 +100,7 @@ void initFirstLineTop(Candy **matrixCandyRef);
 bool isClickInsideArea(Position pointBottomLeft, Position pointTopRight, Position click);
 Position mapCandyClicked(Position click);
 void drawSelectionCandy();
+bool isNeighbor(Position target, Position check);
 
 
 //////////////////////////////////////////////////////
@@ -141,14 +142,44 @@ void mouse(int button, int state, int wheel, int direction, int x, int y){
      Position pointBottomLeft = {0, 0};
      Position pointTopRight = {GRID_X*GRID_SIZE, GRID_Y*GRID_SIZE};
      Position click = {x, y};
+     Position selected;
+     CandyRef candyRef;
+     Candy *candy1, *candy2;
      if(isClickInsideArea(pointBottomLeft, pointTopRight, click)){
-       if(totalSelectedCandy == 2){
+       selected = mapCandyClicked(click);
+       if(totalSelectedCandy == 1 && isNeighbor(selectedCandies[0], selected)){
+         selectedCandies[1] = selected;
+         candyRef.ref = matrixCandy;
+
+         candyRef.line = selectedCandies[0].y;
+         candyRef.column = selectedCandies[0].x;
+         candy1 = getCandy(candyRef);
+         candy1->animation.isAnimating = true;
+         candy1->animation.stage = 0;
+         candy1->animation.from = selectedCandies[0];
+         candy1->animation.to = selectedCandies[1];
+
+
+         candyRef.line = selectedCandies[1].y;
+         candyRef.column = selectedCandies[1].x;
+         candy2 = getCandy(candyRef);
+         candy2->animation.isAnimating = true;
+         candy2->animation.stage = 0;
+         candy2->animation.from = selectedCandies[1];
+         candy2->animation.to = selectedCandies[0];
+
+         totalAnimation += 2;
+         swapCandiesOnMatrix(selectedCandies[0], selectedCandies[1], matrixCandy);
          totalSelectedCandy = 0;
+         hasSelectedCandy = false;
+       } else {
+         selectedCandies[0] = mapCandyClicked(click);
+         totalSelectedCandy = 1;
+         hasSelectedCandy = true;
        }
-       selectedCandies[totalSelectedCandy] = mapCandyClicked(click);
-       totalSelectedCandy++;
      } else {
        totalSelectedCandy = 0;
+       hasSelectedCandy = false;
      }
    }
 
@@ -162,9 +193,20 @@ int main(void){
 }
 
 void drawSelectionCandy(){
-  for(int i = 0; i < totalSelectedCandy; i++){
-    markBackGridAsRed(selectedCandies[i]);
+  if(hasSelectedCandy){
+    for(int i = 0; i < totalSelectedCandy; i++){
+      markBackGridAsRed(selectedCandies[i]);
+    }
   }
+}
+
+bool isNeighbor(Position target, Position check){
+  printf("(%d, %d) e (%d, %d)\n", target.x, target.y, check.x, check.y);
+  if((target.x == check.x || target.y == check.y) &&
+    (abs(target.x - check.x) == 1 || abs(target.y - check.y) == 1 )){
+    return true;
+  }
+  return false;
 }
 
 bool isClickInsideArea(Position pointBottomLeft, Position pointTopRight, Position click){
@@ -476,13 +518,18 @@ void checkCrush(Candy **matrixCandyRef){//Check if there is candies to explode
 }
 
 void swapCandiesOnMatrix(Position from, Position to, Candy **matrix){
-  Candy *tempCandy = *(matrixCandy+from.y*GRID_SIZE + from.x);
-  if(tempCandy != NULL){
-    tempCandy->position.x = to.x;
-    tempCandy->position.y = to.y;
+  Candy *tempCandy1 = *(matrixCandy+from.y*GRID_SIZE + from.x);
+  Candy *tempCandy2 = *(matrix+to.y*GRID_SIZE + to.x);
+  if(tempCandy1 != NULL){
+    tempCandy1->position.x = to.x;
+    tempCandy1->position.y = to.y;
   }
-  *(matrix+from.y*GRID_SIZE + from.x) = *(matrix+to.y*GRID_SIZE + to.x);
-  *(matrix+to.y*GRID_SIZE + to.x) = tempCandy;
+  if(tempCandy2 != NULL){
+    tempCandy2->position.x = from.x;
+    tempCandy2->position.y = from.y;
+  }
+  *(matrix+to.y*GRID_SIZE + to.x) = tempCandy1;
+  *(matrix+from.y*GRID_SIZE + from.x) = tempCandy2;
   hasMatrixCandyChanged = true;
 }
 
