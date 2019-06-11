@@ -30,6 +30,8 @@
 #define CANDY_SIZE 30
 #define ANIMATION_STAGE_MAX 100
 
+#define INVERT_ANIMATION true
+
 const int WIDTH_POINTS = 200;
 //Properties
 int DIM_TELA_X = 600;
@@ -52,6 +54,7 @@ typedef struct {
   Position from;
   Position to;
   bool isAnimating;
+  bool shouldInvert;
   int stage;//Max stage is 100 wich means that the animation is finished
 } Animation;
 
@@ -89,8 +92,8 @@ void hightLightExplodableCandies(Candy **matrixCandyRef);
 Candy* getCandy(CandyRef candyRef);
 void removeCandyOfMatrix(CandyRef candyRef);
 void explodeCandies(Candy **matrixCandyRef);
-void checkCrushX(Candy **matrixCandyRef, int line);
-void checkCrushY(Candy **matrixCandyRef, int column);
+bool checkCrushX(Candy **matrixCandyRef, int line);
+bool checkCrushY(Candy **matrixCandyRef, int column);
 void checkCrush(Candy **matrixCandyRef);
 void swapCandiesOnMatrix(Position from, Position to, Candy **matrix);
 void initCandiesAnimation(Candy **matrixCandyRef);
@@ -101,6 +104,7 @@ bool isClickInsideArea(Position pointBottomLeft, Position pointTopRight, Positio
 Position mapCandyClicked(Position click);
 void drawSelectionCandy();
 bool isNeighbor(Position target, Position check);
+void setAnimationProperties(Candy *candy1, Candy *candy2, bool invertAnimation);
 
 
 //////////////////////////////////////////////////////
@@ -124,7 +128,9 @@ void render(){
 //funcao chamada toda vez que uma tecla for pressionada
 void keyboard(int key){
    printf("\nTecla: %d" , key);
-
+   printf("\nhasAnimations: %d" , hasAnimations);
+   printf("\ntotalAnimation: %d" , totalAnimation);
+   printf("\nhasMatrixCandyChanged: %d" , hasMatrixCandyChanged);
 }
 //funcao chamada toda vez que uma tecla for liberada
 void keyboardUp(int key){
@@ -154,22 +160,23 @@ void mouse(int button, int state, int wheel, int direction, int x, int y){
          candyRef.line = selectedCandies[0].y;
          candyRef.column = selectedCandies[0].x;
          candy1 = getCandy(candyRef);
-         candy1->animation.isAnimating = true;
-         candy1->animation.stage = 0;
-         candy1->animation.from = selectedCandies[0];
-         candy1->animation.to = selectedCandies[1];
-
 
          candyRef.line = selectedCandies[1].y;
          candyRef.column = selectedCandies[1].x;
          candy2 = getCandy(candyRef);
-         candy2->animation.isAnimating = true;
-         candy2->animation.stage = 0;
-         candy2->animation.from = selectedCandies[1];
-         candy2->animation.to = selectedCandies[0];
 
-         totalAnimation += 2;
+         swapCandiesOnMatrix(selectedCandies[0], selectedCandies[1], matrixCandy);//Swap to simulate
+         bool willMakeAPoint = checkCrushX(matrixCandy, selectedCandies[1].y) || checkCrushY(matrixCandy, selectedCandies[1].x) || checkCrushX(matrixCandy, selectedCandies[0].y) || checkCrushY(matrixCandy, selectedCandies[0].x);
+         swapCandiesOnMatrix(selectedCandies[0], selectedCandies[1], matrixCandy);//Swap back after simulation
+
+         if(willMakeAPoint){
+           setAnimationProperties(candy1, candy2, false);
+         } else {//If we should go back to original after animation
+           setAnimationProperties(candy1, candy2, INVERT_ANIMATION);
+         }
+
          swapCandiesOnMatrix(selectedCandies[0], selectedCandies[1], matrixCandy);
+
          totalSelectedCandy = 0;
          hasSelectedCandy = false;
        } else {
@@ -201,7 +208,6 @@ void drawSelectionCandy(){
 }
 
 bool isNeighbor(Position target, Position check){
-  printf("(%d, %d) e (%d, %d)\n", target.x, target.y, check.x, check.y);
   if((target.x == check.x || target.y == check.y) &&
     (abs(target.x - check.x) == 1 || abs(target.y - check.y) == 1 )){
     return true;
@@ -214,13 +220,12 @@ bool isClickInsideArea(Position pointBottomLeft, Position pointTopRight, Positio
   int areaHeight = pointTopRight.y - pointBottomLeft.y;
   int clickWidth = click.x - pointBottomLeft.x;
   int clickHeight = click.y - pointBottomLeft.y;
-  bool isInsideArea = false;
   if(clickHeight > 0 && clickWidth > 0){
     if(clickWidth <= areaWidth && clickHeight <= areaHeight){
-      isInsideArea = true;
+      return true;
     }
   }
-  return isInsideArea;
+  return false;
 }
 
 Position mapCandyClicked(Position click){
@@ -238,6 +243,29 @@ void updateWindowProps(){
   getWindowSize(&DIM_TELA_X, &DIM_TELA_Y);
   GRID_X = (int)ceil(DIM_TELA_X/GRID_SIZE) - ((int)WIDTH_POINTS/GRID_SIZE);
   GRID_Y = (int)ceil(DIM_TELA_Y/GRID_SIZE);
+}
+
+void setAnimationProperties(Candy *candy1, Candy *candy2, bool invertAnimation){//candy1 <-> candy2
+  candy1->animation.isAnimating = true;
+  candy1->animation.stage = 0;
+  candy1->animation.from = candy1->position;
+  candy1->animation.to = candy2->position;
+
+  candy2->animation.isAnimating = true;
+  candy2->animation.stage = 0;
+  candy2->animation.from = candy2->position;
+  candy2->animation.to = candy1->position;
+
+  if(invertAnimation == INVERT_ANIMATION){
+    totalAnimation++;
+    candy1->animation.shouldInvert = true;
+    //We do not need to say that candy2 should invert
+    //Because when candy1 inverts, it will be with candy2
+  } else {
+    candy1->animation.shouldInvert = false;
+    candy2->animation.shouldInvert = false;
+    totalAnimation += 2;
+  }
 }
 
 void setCandyProperties(Candy *candy){
@@ -338,6 +366,7 @@ void initFirstLineTop(Candy **matrixCandyRef){
       candy = getRandomCandy();
       totalAnimation++;
       candy->animation.isAnimating = true;
+      candy->animation.shouldInvert = false;
       candy->animation.from.x = column;
       candy->animation.from.y = GRID_SIZE;
       candy->animation.to.x = column;
@@ -345,6 +374,7 @@ void initFirstLineTop(Candy **matrixCandyRef){
       candy->position.x = column;
       candy->position.y = candyRef.line;
       *((matrixCandyRef+candyRef.line*GRID_SIZE) + column) = candy;
+      hasMatrixCandyChanged = true;
     }
   }
 }
@@ -425,11 +455,12 @@ void explodeCandies(Candy **matrixCandyRef){
   }
 }
 
-void checkCrushX(Candy **matrixCandyRef, int line){//Check if there is candies to explode in a given line
+bool checkCrushX(Candy **matrixCandyRef, int line){//Check if there is candies to explode in a given line
   Candy *currentCandy = NULL;
   CandyRef candyRef;
   candyRef.ref = matrixCandyRef;
   int keyType, contador = 0;
+  bool hasExplodable = false;
   for(int column = 0; column < GRID_SIZE; column++){
     candyRef.line = line;
     candyRef.column = column;
@@ -451,6 +482,7 @@ void checkCrushX(Candy **matrixCandyRef, int line){//Check if there is candies t
             setWillExplode(candyRef);
           }
           currentCandy->willExplode = true;
+          hasExplodable = true;
         }
       } else {
         contador = 1;
@@ -458,6 +490,7 @@ void checkCrushX(Candy **matrixCandyRef, int line){//Check if there is candies t
       }
     }
   }
+  return hasExplodable;
 }
 
 void setWillExplode(CandyRef candyRef){
@@ -467,11 +500,12 @@ void setWillExplode(CandyRef candyRef){
   }
 }
 
-void checkCrushY(Candy **matrixCandyRef, int column){//Check if there is candies to explode in a given line
+bool checkCrushY(Candy **matrixCandyRef, int column){//Check if there is candies to explode in a given line
   Candy *currentCandy = NULL;
   CandyRef candyRef;
   candyRef.ref = matrixCandyRef;
   int keyType, contador = 0;
+  bool hasExplodable = false;
   for(int line = 0; line < GRID_SIZE; line++){
     candyRef.line = line;
     candyRef.column = column;
@@ -493,6 +527,7 @@ void checkCrushY(Candy **matrixCandyRef, int column){//Check if there is candies
             setWillExplode(candyRef);
           }
           currentCandy->willExplode = true;
+          hasExplodable = true;
         }
       } else {
         contador = 1;
@@ -500,6 +535,7 @@ void checkCrushY(Candy **matrixCandyRef, int column){//Check if there is candies
       }
     }
   }
+  return hasExplodable;
 }
 
 void checkCrush(Candy **matrixCandyRef){//Check if there is candies to explode
@@ -511,9 +547,8 @@ void checkCrush(Candy **matrixCandyRef){//Check if there is candies to explode
         checkCrushY(matrixCandyRef, i);
       }
       hightLightExplodableCandies(matrixCandyRef);
-    } else {//Has already checked who should explode
-      explodeCandies(matrixCandyRef);
     }
+    explodeCandies(matrixCandyRef);
   }
 }
 
@@ -552,6 +587,7 @@ void initCandiesAnimation(Candy **matrixCandyRef){
       if(belowCandy == NULL && upCandy != NULL){
         if(upCandy->animation.isAnimating == false){
           upCandy->animation.isAnimating = true;
+          upCandy->animation.shouldInvert = false;
           upCandy->animation.stage = 0;
           upCandy->animation.from.y = line+1;//Line up
           upCandy->animation.from.x = column;//Line up
@@ -577,9 +613,21 @@ void animateCandy(Candy *candy, Position center){
     animatioPosX += (candy->animation.from.x - candy->animation.to.x)*(CANDY_SIZE*2.2)*(1-((float)stage/ANIMATION_STAGE_MAX));
     circleFill(animatioPosX, animatioPosY, sizeCandy, candy->shapeSides);
   } else {//Animation has finished
-    circleFill(center.x, center.y, sizeCandy, candy->shapeSides);
-    candy->animation.isAnimating = false;
     totalAnimation--;//Remove one animation from the counter
+    circleFill(center.x, center.y, sizeCandy, candy->shapeSides);
+    if(candy->animation.shouldInvert){//Should invert position back to original before swap
+      CandyRef candyRef;
+      candyRef.ref = matrixCandy;
+      candyRef.line = candy->animation.from.y;//`animation.from` holds the other candy that was in position `animation.to`
+      candyRef.column = candy->animation.from.x;
+
+      candy->animation.shouldInvert = false;
+
+      setAnimationProperties(candy, getCandy(candyRef), false);
+      swapCandiesOnMatrix(candy->animation.from, candy->animation.to, matrixCandy);//Swap back
+    } else {
+      candy->animation.isAnimating = false;
+    }
   }
   candy->animation.stage++;
 }

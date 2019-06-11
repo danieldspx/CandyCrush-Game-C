@@ -187,7 +187,7 @@
 
 1559793434 c:\users\danie\documents\candycrush\include\candy.h
 
-1560116457 source:c:\users\danie\documents\candycrush\src\main_c.cpp
+1560209143 source:c:\users\danie\documents\candycrush\src\main_c.cpp
 	"GL/glut.h"
 	"GL/freeglut_ext.h"
 	<math.h>
@@ -196,7 +196,5 @@
 	<stdlib.h>
 	<time.h>
 	<stdbool.h>
-	<Windows.h>
-	<unistd.h>
 	"gl_canvas2d.h"
 
