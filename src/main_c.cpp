@@ -38,12 +38,11 @@ int DIM_TELA_X = 600;
 int DIM_TELA_Y = 600;
 int GRID_X = (int)ceil(DIM_TELA_X/GRID_SIZE);
 int GRID_Y = (int)ceil(DIM_TELA_Y/GRID_SIZE);
+clock_t G_begin_time;
 //Flags
 bool hasMatrixCandyChanged = true;//Start as a New state
 bool hasAnimations = true;//Start as a New state
 bool hasSelectedCandy = false;
-bool hasJustReseted = false;
-int countResetStage = 0;
 int totalAnimation = 0;
 int totalSelectedCandy = 0;
 unsigned int G_totalPoints = 0;
@@ -115,6 +114,10 @@ void resetMatrixCandies(Candy **matrixCandyRef);
 void verifyMatrixCandyPlays(Candy **matrixCandyRef);
 void updateAnimationCounter(Candy **matrixCandyRef);
 bool isMatrixFullFilled(Candy **matrixCandyRef);
+bool isClickOnResetBtn(Position click);
+void drawTimeOnScreen();
+void drawResetButton();
+void resetTime();
 
 
 //////////////////////////////////////////////////////
@@ -130,6 +133,8 @@ void render(){
     drawSelectionCandy();
     drawCandiesOnScreen();
     drawPointsOnScreen();
+    drawTimeOnScreen();
+    drawResetButton();
     // rect(100, 100, 100+100, 100+100);
     //
     // circle(200, 200, 100, 4);
@@ -212,16 +217,25 @@ void mouse(int button, int state, int wheel, int direction, int x, int y){
      } else {
        totalSelectedCandy = 0;
        hasSelectedCandy = false;
+       if(isClickOnResetBtn(click)){
+         resetMatrixCandies(matrixCandy);
+         resetTime();
+       }
      }
    }
 
 }
 
 int main(void){
+    resetTime();
     srand(time(0));
     initMatrixCandyCrush(matrixCandy);
     initCanvas(DIM_TELA_X + WIDTH_POINTS, DIM_TELA_Y, "Candy Crush");
     runCanvas();
+}
+
+void resetTime(){
+  G_begin_time = clock();
 }
 
 void drawSelectionCandy(){
@@ -604,7 +618,6 @@ void swapCandiesOnMatrix(Position from, Position to, Candy **matrix){
 void initCandiesAnimation(Candy **matrixCandyRef){
   Candy *upCandy, *belowCandy;
   CandyRef candyRefUp, candyRefBelow;
-  Position futurePosition;
   hasAnimations = false;
   candyRefUp.ref = matrixCandyRef;
   candyRefBelow.ref = matrixCandyRef;
@@ -784,4 +797,49 @@ void updateAnimationCounter(Candy **matrixCandyRef){
   if(hasAnimationRunning(matrixCandyRef) == false && totalAnimation != 0){
     totalAnimation = 0;
   }
+}
+
+void drawTimeOnScreen(){
+  float time = float( clock () - G_begin_time ) /  CLOCKS_PER_SEC;
+  int margin = 20;
+  int posX = DIM_TELA_X - WIDTH_POINTS + margin;
+  int posY = DIM_TELA_Y - 50;
+  char timeScreen[50];
+  sprintf(timeScreen, "Tempo: %.2f", time);
+  color(RGB(255), RGB(255), RGB(255));
+  text(posX, posY, timeScreen);
+}
+
+bool isClickOnResetBtn(Position click){
+  int margin = 20, marginTop = 100;
+  int height = 40, width = 100;
+
+  Position bottomLeft, topRight;
+
+  bottomLeft.x = DIM_TELA_X - WIDTH_POINTS + margin;
+  bottomLeft.y = DIM_TELA_Y - (height + marginTop);
+
+  topRight.x = bottomLeft.x + width;
+  topRight.y = bottomLeft.y + height;
+
+  return isClickInsideArea(bottomLeft, topRight, click);
+}
+
+void drawResetButton(){
+  int margin = 20, marginTop = 100;
+  int height = 40, width = 100;
+
+  Position bottomLeft, topRight;
+
+  bottomLeft.x = DIM_TELA_X - WIDTH_POINTS + margin;
+  bottomLeft.y = DIM_TELA_Y - (height + marginTop);
+
+  topRight.x = bottomLeft.x + width;
+  topRight.y = bottomLeft.y + height;
+
+  color(RGB(255), RGB(0), RGB(0));
+  rectFill(bottomLeft.x, bottomLeft.y, topRight.x, topRight.y);
+
+  color(RGB(255), RGB(255), RGB(255));
+  text(bottomLeft.x + 5, topRight.y-((topRight.y - bottomLeft.y)/2 + 5), "Resetar");
 }
