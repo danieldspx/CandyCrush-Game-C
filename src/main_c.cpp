@@ -28,7 +28,7 @@
 #define PI 3.14159265
 #define GRID_SIZE 9
 #define CANDY_SIZE 30
-#define ANIMATION_STAGE_MAX 100
+#define ANIMATION_STAGE_MAX 50
 
 #define INVERT_ANIMATION true
 
@@ -42,8 +42,11 @@ int GRID_Y = (int)ceil(DIM_TELA_Y/GRID_SIZE);
 bool hasMatrixCandyChanged = true;//Start as a New state
 bool hasAnimations = true;//Start as a New state
 bool hasSelectedCandy = false;
+bool hasJustReseted = false;
+int countResetStage = 0;
 int totalAnimation = 0;
 int totalSelectedCandy = 0;
+unsigned int G_totalPoints = 0;
 
 typedef struct {
   int x;
@@ -55,7 +58,7 @@ typedef struct {
   Position to;
   bool isAnimating;
   bool shouldInvert;
-  int stage;//Max stage is 100 wich means that the animation is finished
+  int stage;//Max stage wich means that the animation is finished
 } Animation;
 
 typedef struct {
@@ -92,8 +95,8 @@ void hightLightExplodableCandies(Candy **matrixCandyRef);
 Candy* getCandy(CandyRef candyRef);
 void removeCandyOfMatrix(CandyRef candyRef);
 void explodeCandies(Candy **matrixCandyRef);
-bool checkCrushX(Candy **matrixCandyRef, int line);
-bool checkCrushY(Candy **matrixCandyRef, int column);
+bool checkCrushX(Candy **matrixCandyRef, int line, bool shouldSetExplode);
+bool checkCrushY(Candy **matrixCandyRef, int column, bool shouldSetExplode);
 void checkCrush(Candy **matrixCandyRef);
 void swapCandiesOnMatrix(Position from, Position to, Candy **matrix);
 void initCandiesAnimation(Candy **matrixCandyRef);
@@ -105,19 +108,28 @@ Position mapCandyClicked(Position click);
 void drawSelectionCandy();
 bool isNeighbor(Position target, Position check);
 void setAnimationProperties(Candy *candy1, Candy *candy2, bool invertAnimation);
+void drawPointsOnScreen();
+bool hasAnimationRunning(Candy **matrixCandyRef);
+bool hasPossiblePlay(Candy **matrixCandyRef);
+void resetMatrixCandies(Candy **matrixCandyRef);
+void verifyMatrixCandyPlays(Candy **matrixCandyRef);
+void updateAnimationCounter(Candy **matrixCandyRef);
+bool isMatrixFullFilled(Candy **matrixCandyRef);
 
 
 //////////////////////////////////////////////////////
 
 void render(){
-
     clear(0,0,0);
     updateWindowProps();
+    updateAnimationCounter(matrixCandy);
+    verifyMatrixCandyPlays(matrixCandy);
     initFirstLineTop(matrixCandy);
     initCandiesAnimation(matrixCandy);
     checkCrush(matrixCandy);
     drawSelectionCandy();
     drawCandiesOnScreen();
+    drawPointsOnScreen();
     // rect(100, 100, 100+100, 100+100);
     //
     // circle(200, 200, 100, 4);
@@ -131,6 +143,8 @@ void keyboard(int key){
    printf("\nhasAnimations: %d" , hasAnimations);
    printf("\ntotalAnimation: %d" , totalAnimation);
    printf("\nhasMatrixCandyChanged: %d" , hasMatrixCandyChanged);
+   printf("\nhasAnimationRunning: %d" , hasAnimationRunning(matrixCandy));
+   printf("\nhasPossiblePlay: %d" , hasPossiblePlay(matrixCandy));
 }
 //funcao chamada toda vez que uma tecla for liberada
 void keyboardUp(int key){
@@ -165,8 +179,19 @@ void mouse(int button, int state, int wheel, int direction, int x, int y){
          candyRef.column = selectedCandies[1].x;
          candy2 = getCandy(candyRef);
 
+         if(candy1 == NULL || candy2 == NULL){
+           totalSelectedCandy = 0;
+           hasSelectedCandy = false;
+           return;
+         }
+
          swapCandiesOnMatrix(selectedCandies[0], selectedCandies[1], matrixCandy);//Swap to simulate
-         bool willMakeAPoint = checkCrushX(matrixCandy, selectedCandies[1].y) || checkCrushY(matrixCandy, selectedCandies[1].x) || checkCrushX(matrixCandy, selectedCandies[0].y) || checkCrushY(matrixCandy, selectedCandies[0].x);
+
+         bool willMakeAPoint = checkCrushX(matrixCandy, selectedCandies[1].y, true) ||
+                                checkCrushY(matrixCandy, selectedCandies[1].x, true) ||
+                                checkCrushX(matrixCandy, selectedCandies[0].y, true) ||
+                                checkCrushY(matrixCandy, selectedCandies[0].x, true);
+
          swapCandiesOnMatrix(selectedCandies[0], selectedCandies[1], matrixCandy);//Swap back after simulation
 
          if(willMakeAPoint){
@@ -450,12 +475,13 @@ void explodeCandies(Candy **matrixCandyRef){
       if(currentCandy != NULL && currentCandy->willExplode){
         free(currentCandy);
         removeCandyOfMatrix(candyRef);
+        G_totalPoints++;
       }
     }
   }
 }
 
-bool checkCrushX(Candy **matrixCandyRef, int line){//Check if there is candies to explode in a given line
+bool checkCrushX(Candy **matrixCandyRef, int line, bool shouldSetExplode){//Check if there is candies to explode in a given line
   Candy *currentCandy = NULL;
   CandyRef candyRef;
   candyRef.ref = matrixCandyRef;
@@ -475,13 +501,15 @@ bool checkCrushX(Candy **matrixCandyRef, int line){//Check if there is candies t
       if(keyType == currentCandy->type){
         contador++;
         if(contador >= 3){
-          if(contador == 3){//Mark the 2 candies before the 3th
-            candyRef.column--;//Back one column
-            setWillExplode(candyRef);
-            candyRef.column--;//Back one column again
-            setWillExplode(candyRef);
+          if(shouldSetExplode){
+            if(contador == 3){//Mark the 2 candies before the 3th
+              candyRef.column--;//Back one column
+              setWillExplode(candyRef);
+              candyRef.column--;//Back one column again
+              setWillExplode(candyRef);
+            }
+            currentCandy->willExplode = true;
           }
-          currentCandy->willExplode = true;
           hasExplodable = true;
         }
       } else {
@@ -500,7 +528,7 @@ void setWillExplode(CandyRef candyRef){
   }
 }
 
-bool checkCrushY(Candy **matrixCandyRef, int column){//Check if there is candies to explode in a given line
+bool checkCrushY(Candy **matrixCandyRef, int column, bool shouldSetExplode){//Check if there is candies to explode in a given line
   Candy *currentCandy = NULL;
   CandyRef candyRef;
   candyRef.ref = matrixCandyRef;
@@ -520,13 +548,15 @@ bool checkCrushY(Candy **matrixCandyRef, int column){//Check if there is candies
       if(keyType == currentCandy->type){
         contador++;
         if(contador >= 3){
-          if(contador == 3){//Mark the 2 candies before the 3th
-            candyRef.line--;//Back one column
-            setWillExplode(candyRef);
-            candyRef.line--;//Back one column again
-            setWillExplode(candyRef);
+          if(shouldSetExplode){
+            if(contador == 3){//Mark the 2 candies before the 3th
+              candyRef.line--;//Back one column
+              setWillExplode(candyRef);
+              candyRef.line--;//Back one column again
+              setWillExplode(candyRef);
+            }
+            currentCandy->willExplode = true;
           }
-          currentCandy->willExplode = true;
           hasExplodable = true;
         }
       } else {
@@ -539,12 +569,15 @@ bool checkCrushY(Candy **matrixCandyRef, int column){//Check if there is candies
 }
 
 void checkCrush(Candy **matrixCandyRef){//Check if there is candies to explode
+  if(totalAnimation < 0){
+    totalAnimation = 0;
+  }
   if(totalAnimation == 0){
     if(hasMatrixCandyChanged && !hasAnimations){
       hasMatrixCandyChanged = false;
       for(int i = 0; i < GRID_SIZE; i++){
-        checkCrushX(matrixCandyRef, i);
-        checkCrushY(matrixCandyRef, i);
+        checkCrushX(matrixCandyRef, i, true);
+        checkCrushY(matrixCandyRef, i, true);
       }
       hightLightExplodableCandies(matrixCandyRef);
     }
@@ -553,7 +586,7 @@ void checkCrush(Candy **matrixCandyRef){//Check if there is candies to explode
 }
 
 void swapCandiesOnMatrix(Position from, Position to, Candy **matrix){
-  Candy *tempCandy1 = *(matrixCandy+from.y*GRID_SIZE + from.x);
+  Candy *tempCandy1 = *(matrix+from.y*GRID_SIZE + from.x);
   Candy *tempCandy2 = *(matrix+to.y*GRID_SIZE + to.x);
   if(tempCandy1 != NULL){
     tempCandy1->position.x = to.x;
@@ -630,4 +663,125 @@ void animateCandy(Candy *candy, Position center){
     }
   }
   candy->animation.stage++;
+}
+
+void drawPointsOnScreen(){
+  int margin = 20;
+  int posX = DIM_TELA_X - WIDTH_POINTS + margin;
+  int posY = DIM_TELA_Y - 20;
+  char points[50];
+  sprintf(points, "Pontos: %d", G_totalPoints);
+  color(RGB(255), RGB(255), RGB(255));
+  text(posX, posY, points);
+}
+
+bool hasPossiblePlay(Candy **matrixCandyRef){
+  Position from, to;
+  bool hasPossiblePlay = false;
+  CandyRef candyRef;
+  bool stateMatrixChanged;
+  candyRef.ref = matrixCandyRef;
+  for(int line = 0; line < GRID_SIZE; line++){
+    for(int column = 0; column < GRID_SIZE; column++){
+      candyRef.line = line;
+      candyRef.column = column;
+      if(getCandy(candyRef) != NULL){
+        from.y = line;
+        from.x = column;
+
+        to.y = line;
+        to.x = column+1;
+        if(column == (GRID_SIZE-1)){//Avoid overflow
+          to.x = column;
+        }
+        // printf("(%d, %d) to (%d, %d) Right\n", from.x, from.y, to.x, to.y);
+        stateMatrixChanged = hasMatrixCandyChanged;//Keep the state of the variable before the changes
+        swapCandiesOnMatrix(from, to, matrixCandyRef);//Move Candy (right)
+        if(column == (GRID_SIZE-1)){
+          hasPossiblePlay = checkCrushX(matrixCandyRef, line, false) ||
+                            checkCrushY(matrixCandyRef, column, false);
+        } else {
+          hasPossiblePlay = checkCrushX(matrixCandyRef, line, false) ||
+                            checkCrushY(matrixCandyRef, column, false) ||
+                            checkCrushY(matrixCandyRef, column+1, false);
+        }
+        swapCandiesOnMatrix(to, from, matrixCandyRef);//Goes back to original (left)
+        hasMatrixCandyChanged = stateMatrixChanged;
+        if(hasPossiblePlay){
+          return true;
+        }
+
+        to.y = line+1;
+        to.x = column;
+        if(line == (GRID_SIZE-1)){//Avoid overflow
+          to.y = line;
+        }
+        stateMatrixChanged = hasMatrixCandyChanged;
+        swapCandiesOnMatrix(from, to, matrixCandyRef);//Move Candy (down)
+        if(line == (GRID_SIZE-1)){
+          hasPossiblePlay = checkCrushX(matrixCandyRef, line, false) ||
+                            checkCrushY(matrixCandyRef, column, false);
+        } else {
+          hasPossiblePlay = checkCrushX(matrixCandyRef, line, false) ||
+                            checkCrushX(matrixCandyRef, line+1, false) ||
+                            checkCrushY(matrixCandyRef, column, false);
+        }
+        swapCandiesOnMatrix(to, from, matrixCandyRef);//Goes back to original (up)
+        hasMatrixCandyChanged = stateMatrixChanged;
+        if(hasPossiblePlay){
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+
+void resetMatrixCandies(Candy **matrixCandyRef){
+  for(int line = 0; line < GRID_SIZE; line++){
+    for(int column = 0; column < GRID_SIZE; column++){
+      free(*((matrixCandyRef+line*GRID_SIZE) + column));
+      *((matrixCandyRef+line*GRID_SIZE) + column) = NULL;
+    }
+  }
+}
+
+bool hasAnimationRunning(Candy **matrixCandyRef){
+  Candy *candy;
+  for(int line = 0; line < GRID_SIZE; line++){
+    for(int column = 0; column < GRID_SIZE; column++){
+      candy = *((matrixCandyRef+line*GRID_SIZE) + column);
+      if(candy != NULL){
+        if(candy->animation.isAnimating){
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+
+bool isMatrixFullFilled(Candy **matrixCandyRef){
+  Candy *candy;
+  for(int line = 0; line < GRID_SIZE; line++){
+    for(int column = 0; column < GRID_SIZE; column++){
+      candy = *((matrixCandyRef+line*GRID_SIZE) + column);
+      if(candy == NULL){
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+void verifyMatrixCandyPlays(Candy **matrixCandyRef){
+  if(isMatrixFullFilled(matrixCandyRef) && !hasPossiblePlay(matrixCandyRef) && !hasAnimationRunning(matrixCandyRef)){
+    resetMatrixCandies(matrixCandyRef);
+  }
+}
+
+void updateAnimationCounter(Candy **matrixCandyRef){
+  if(hasAnimationRunning(matrixCandyRef) == false && totalAnimation != 0){
+    totalAnimation = 0;
+  }
 }
