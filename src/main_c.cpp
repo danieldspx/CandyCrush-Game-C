@@ -28,8 +28,8 @@
 #define PI 3.14159265
 #define GRID_SIZE 9
 #define CANDY_SIZE 30
-#define ANIMATION_STAGE_MAX 50
-
+#define ANIMATION_STAGE_MAX 50 //Same as speed
+#define NORMAL_CANDIES 6
 #define INVERT_ANIMATION true
 
 const int WIDTH_POINTS = 200;
@@ -80,6 +80,7 @@ Candy **matrixCandy = (Candy **)malloc(CANDY_SIZE*CANDY_SIZE*sizeof(Candy *));
 Position selectedCandies[2];
 
 int getRandomType();
+int getRandomNumber(int maxNum);
 void updateWindowProps();
 void setCandyProperties(Candy *candy);
 Candy* getRandomCandy();
@@ -118,6 +119,7 @@ bool isClickOnResetBtn(Position click);
 void drawTimeOnScreen();
 void drawResetButton();
 void resetTime();
+void drawGameOverAlert();
 
 
 //////////////////////////////////////////////////////
@@ -135,33 +137,20 @@ void render(){
     drawPointsOnScreen();
     drawTimeOnScreen();
     drawResetButton();
-    // rect(100, 100, 100+100, 100+100);
-    //
-    // circle(200, 200, 100, 4);
-    //
-    // text(20,500,"Programa Demo Canvas C.");
 }
 
 //funcao chamada toda vez que uma tecla for pressionada
 void keyboard(int key){
    printf("\nTecla: %d" , key);
-   printf("\nhasAnimations: %d" , hasAnimations);
-   printf("\ntotalAnimation: %d" , totalAnimation);
-   printf("\nhasMatrixCandyChanged: %d" , hasMatrixCandyChanged);
-   printf("\nhasAnimationRunning: %d" , hasAnimationRunning(matrixCandy));
-   printf("\nhasPossiblePlay: %d" , hasPossiblePlay(matrixCandy));
 }
 //funcao chamada toda vez que uma tecla for liberada
 void keyboardUp(int key){
    printf("\nLiberou tecla: %d" , key);
 }
 
-
 //funcao para tratamento de mouse: cliques, movimentos e arrastos
 void mouse(int button, int state, int wheel, int direction, int x, int y){
    y = DIM_TELA_Y - y;
-
-   //printf("\nmouse %d %d %d %d %d %d", button, state, wheel, direction,  x, y);
 
    if(button == 0 && state == 0){
      Position pointBottomLeft = {0, 0};
@@ -238,6 +227,7 @@ void resetTime(){
   G_begin_time = clock();
 }
 
+//Draw a red background in the Candy that you select
 void drawSelectionCandy(){
   if(hasSelectedCandy){
     for(int i = 0; i < totalSelectedCandy; i++){
@@ -267,6 +257,7 @@ bool isClickInsideArea(Position pointBottomLeft, Position pointTopRight, Positio
   return false;
 }
 
+//Transform raw position into coordenates like (column, line)
 Position mapCandyClicked(Position click){
   Position selected;
   selected.x = click.x / GRID_X;
@@ -275,7 +266,11 @@ Position mapCandyClicked(Position click){
 }
 
 int getRandomType(){
-  return ((rand() % 4)+1);
+  return getRandomNumber(NORMAL_CANDIES);
+}
+
+int getRandomNumber(int maxNum){
+  return ((rand() % maxNum)+1);
 }
 
 void updateWindowProps(){
@@ -312,27 +307,39 @@ void setCandyProperties(Candy *candy){
   switch (candy->type) {
     case 1://Bola Azul
       sides = 30;
-      red = 66;
-      green = 134;
-      blue = 244;
+      red = 3;
+      green = 112;
+      blue = 252;
       break;
     case 2://Bola Laranja
       sides = 30;
       red = 255;
-      green = 108;
-      blue = 40;
+      green = 127;
+      blue = 0;
       break;
     case 3://Quadrado Verde
       sides = 4;
-      red = 64;
-      green = 249;
-      blue = 114;
+      red = 58;
+      green = 251;
+      blue = 3;
       break;
     case 4://Heptagono Roxo
       sides = 7;
-      red = 179;
-      green = 64;
-      blue = 249;
+      red = 208;
+      green = 13;
+      blue = 253;
+      break;
+    case 5://Hexagono Amarelo
+      sides = 30;
+      red = 254;
+      green = 252;
+      blue = 21;
+      break;
+    case 6://Triangulo Vermelho
+      sides = 3;
+      red = 245;
+      green = 28;
+      blue = 18;
       break;
   }
   candy->shapeSides = sides;
@@ -445,6 +452,7 @@ void drawCandiesOnScreen(){
   }
 }
 
+//Hightlight candies that will explode (It is pretty fast, you can barely see it)
 void hightLightExplodableCandies(Candy **matrixCandyRef){
   Candy *currentCandy;
   CandyRef candyRef;
@@ -707,7 +715,6 @@ bool hasPossiblePlay(Candy **matrixCandyRef){
         if(column == (GRID_SIZE-1)){//Avoid overflow
           to.x = column;
         }
-        // printf("(%d, %d) to (%d, %d) Right\n", from.x, from.y, to.x, to.y);
         stateMatrixChanged = hasMatrixCandyChanged;//Keep the state of the variable before the changes
         swapCandiesOnMatrix(from, to, matrixCandyRef);//Move Candy (right)
         if(column == (GRID_SIZE-1)){
@@ -747,7 +754,7 @@ bool hasPossiblePlay(Candy **matrixCandyRef){
       }
     }
   }
-  return false;
+  return false;//Game over
 }
 
 void resetMatrixCandies(Candy **matrixCandyRef){
@@ -789,7 +796,8 @@ bool isMatrixFullFilled(Candy **matrixCandyRef){
 
 void verifyMatrixCandyPlays(Candy **matrixCandyRef){
   if(isMatrixFullFilled(matrixCandyRef) && !hasPossiblePlay(matrixCandyRef) && !hasAnimationRunning(matrixCandyRef)){
-    resetMatrixCandies(matrixCandyRef);
+    // resetMatrixCandies(matrixCandyRef); //I was doing it, but the assignment says that I have to say that the game is over.
+    drawGameOverAlert();
   }
 }
 
@@ -842,4 +850,23 @@ void drawResetButton(){
 
   color(RGB(255), RGB(255), RGB(255));
   text(bottomLeft.x + 5, topRight.y-((topRight.y - bottomLeft.y)/2 + 5), "Resetar");
+}
+
+void drawGameOverAlert(){
+  int margin = 20, marginTop = 200;
+  int height = 40, width = 100;
+
+  Position bottomLeft, topRight;
+
+  bottomLeft.x = DIM_TELA_X - WIDTH_POINTS + margin;
+  bottomLeft.y = DIM_TELA_Y - (height + marginTop);
+
+  topRight.x = bottomLeft.x + width;
+  topRight.y = bottomLeft.y + height;
+
+  color(RGB(255), RGB(0), RGB(0));
+  rectFill(bottomLeft.x, bottomLeft.y, topRight.x, topRight.y);
+
+  color(RGB(255), RGB(255), RGB(255));
+  text(bottomLeft.x + 5, topRight.y-((topRight.y - bottomLeft.y)/2 + 5), "Game Over");
 }
